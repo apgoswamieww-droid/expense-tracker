@@ -1,28 +1,38 @@
 import { Component, signal, OnInit } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SupabaseService } from './supabase-service';
+import { Auth } from './auth/auth';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, Auth],
   templateUrl: './app.html',
-  styleUrl: './app.css'
+  styleUrl: './app.css',
 })
 export class App implements OnInit {
+  session: any = null;
   expenses: any[] = [];
   newTitle: string = '';
   newAmount: number = 0;
   newCategory: string = 'Food';
 
-  constructor(private supabaseService: SupabaseService) {}
+  constructor(private supabaseService: SupabaseService) { }
 
   async ngOnInit() {
-    await this.fetchExpenses();
-  }
+    const { data } = await this.supabaseService.getUser();
+    this.session = data.user;
 
+    if (this.session) {
+      await this.fetchExpenses(); // લોગિન હોય તો જ ડેટા લાવવા
+    }
+  }
+  async logout() {
+    await this.supabaseService.signOut();
+    location.reload();
+  }
   async fetchExpenses() {
     this.expenses = await this.supabaseService.getExpenses();
   }
@@ -37,7 +47,25 @@ export class App implements OnInit {
   }
 
   async removeExpense(id: number) {
-    await this.supabaseService.deleteExpense(id);
-    await this.fetchExpenses();
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        await this.supabaseService.deleteExpense(id);
+        await this.fetchExpenses();
+
+        Swal.fire(
+          'Deleted!',
+          'Your expense has been deleted.',
+          'success'
+        );
+      }
+    });
   }
 }
