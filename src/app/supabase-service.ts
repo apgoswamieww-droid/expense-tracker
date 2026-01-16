@@ -11,11 +11,14 @@ export class SupabaseService {
     this.supabase = createClient(environment.supabaseUrl, environment.supabaseKey);
   }
 
-  // ૧. બધા ખર્ચ (Expenses) ડેટાબેઝમાંથી લાવવા
+  // ૧. લોગિન યુઝરના ખર્ચ (Expenses) ડેટાબેઝમાંથી લાવવા
   async getExpenses() {
+    const { data: { user } } = await this.supabase.auth.getUser();
+
     const { data, error } = await this.supabase
       .from('expenses')
       .select('*')
+      .eq('user_id', user?.id) // ફક્ત લોગિન યુઝરનો ડેટા
       .order('created_at', { ascending: false });
 
     if (error) throw error;
