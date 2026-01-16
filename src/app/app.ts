@@ -3,12 +3,15 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SupabaseService } from './supabase-service';
 import { Auth } from './auth/auth';
+import { DashboardComponent } from './components/dashboard/dashboard.component';
+import { ExpenseFormComponent } from './components/expense-form/expense-form.component';
+import { ExpenseListComponent } from './components/expense-list/expense-list.component';
 import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, FormsModule, Auth],
+  imports: [CommonModule, FormsModule, Auth, DashboardComponent, ExpenseFormComponent, ExpenseListComponent],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
@@ -16,18 +19,7 @@ export class App implements OnInit {
   session: any = null;
   expenses: any[] = [];
   isLoading: boolean = false;
-  isInitializing: boolean = true; // New flag for initial load
-
-  // Form Inputs
-  newTitle: string = '';
-  newAmount: number | null = null;
-  newCategory: string = 'All';
-
-  // Filters
-  searchQuery: string = '';
-  filterCategory: string = 'All';
-  startDate: string = '';
-  endDate: string = '';
+  isInitializing: boolean = true;
 
   // Dashboard Constants
   readonly monthlyBudget = 15000;
@@ -70,79 +62,25 @@ export class App implements OnInit {
     }
   }
 
-  async onSubmit() {
-    if (!this.newTitle || !this.newAmount || this.newAmount <= 0) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Invalid Input',
-        text: 'Please enter a valid title and amount!',
-        timer: 2000
-      });
-      return;
-    }
+  // Handlers for Child Component Events
 
+  // Called when expense is added in ExpenseFormComponent
+  async onExpenseAdded() {
+    await this.fetchExpenses();
+  }
+
+  // Called when delete is confirmed in ExpenseListComponent
+  async onRemoveExpense(id: number) {
     this.isLoading = true;
     try {
-      await this.supabaseService.addExpense(this.newTitle, this.newAmount, this.newCategory);
-
-      Swal.fire({
-        icon: 'success',
-        title: 'Added!',
-        text: 'Expense added successfully',
-        timer: 1500,
-        showConfirmButton: false
-      });
-
-      this.newTitle = '';
-      this.newAmount = null;
-      this.newCategory = 'Food'; // Reset to default
+      await this.supabaseService.deleteExpense(id);
       await this.fetchExpenses();
+      Swal.fire('Deleted!', 'Your expense has been deleted.', 'success');
     } catch (error: any) {
       Swal.fire({ icon: 'error', title: 'Error', text: error.message });
     } finally {
       this.isLoading = false;
     }
-  }
-
-  async removeExpense(id: number) {
-    Swal.fire({
-      title: 'Are you sure?',
-      text: "You won't be able to revert this!",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Yes, delete it!'
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        this.isLoading = true;
-        await this.supabaseService.deleteExpense(id);
-        await this.fetchExpenses();
-        this.isLoading = false;
-        Swal.fire('Deleted!', 'Your expense has been deleted.', 'success');
-      }
-    });
-  }
-
-  // Getters for Analytics & Filtering
-  get filteredExpenses() {
-    return this.expenses.filter(exp => {
-      const matchesSearch = exp.title.toLowerCase().includes(this.searchQuery.toLowerCase());
-      const matchesCategory = this.filterCategory === 'All' || exp.category === this.filterCategory;
-
-      let matchesDate = true;
-      if (this.startDate && this.endDate) {
-        const expDate = new Date(exp.created_at).getTime();
-        const start = new Date(this.startDate).getTime();
-        const end = new Date(this.endDate).getTime();
-        // Include end date fully (end of day could be better, but simple comparison for now)
-        // Adding 1 day to end date to make it inclusive if user picks same day
-        const endInclusive = end + 86400000;
-        matchesDate = expDate >= start && expDate < endInclusive;
-      }
-
-      return matchesSearch && matchesCategory && matchesDate;
-    });
   }
 
   get totalBalance() {
@@ -151,12 +89,5 @@ export class App implements OnInit {
 
   get savings() {
     return this.monthlyBudget - this.totalBalance;
-  }
-
-  clearFilters() {
-    this.searchQuery = '';
-    this.filterCategory = 'All';
-    this.startDate = '';
-    this.endDate = '';
   }
 }
