@@ -29,15 +29,11 @@
   </div>
 
   <!-- Dashboard Analytics -->
-  <app-dashboard
-    [totalBalance]="totalBalance"
-    [monthlyBudget]="monthlyBudget"
-    [savings]="savings">
+  <app-dashboard [totalBalance]="totalBalance" [monthlyBudget]="monthlyBudget" [savings]="savings">
   </app-dashboard>
 
   <!-- Add Expense Form -->
-  <app-expense-form
-    (expenseAdded)="onExpenseAdded()">
+  <app-expense-form [expenseToEdit]="editingExpense" (expenseAdded)="onExpenseAdded()" (cancelEdit)="onCancelEdit()">
   </app-expense-form>
 
   <!-- Loading State (Global loading when fetching expenses initially or generally) -->
@@ -49,10 +45,8 @@
   </div>
 
   <!-- Expenses List -->
-  <app-expense-list
-    *ngIf="!isLoading"
-    [expenses]="expenses"
-    (removeExpense)="onRemoveExpense($event)">
+  <app-expense-list *ngIf="!isLoading" [expenses]="expenses" (removeExpense)="onRemoveExpense($event)"
+    (editExpense)="onEditExpense($event)">
   </app-expense-list>
 
 </div>

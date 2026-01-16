@@ -42,6 +42,16 @@ export class SupabaseService {
     return data;
   }
 
+  // ૨.૫. ખર્ચ અપડેટ કરવો (Edit Expense)
+  async updateExpense(id: number, title: string, amount: number, category: string) {
+    const { error } = await this.supabase
+      .from('expenses')
+      .update({ title, amount, category })
+      .match({ id });
+
+    if (error) throw error;
+  }
+
   // ૩. ખર્ચ ડિલીટ કરવો
   async deleteExpense(id: number) {
     const { error } = await this.supabase.from('expenses').delete().match({ id });

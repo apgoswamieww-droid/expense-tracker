@@ -21,6 +21,8 @@ export class App implements OnInit {
   isLoading: boolean = false;
   isInitializing: boolean = true;
 
+  editingExpense: any = null; // State to hold expense being edited
+
   // Dashboard Constants
   readonly monthlyBudget = 15000;
 
@@ -64,9 +66,20 @@ export class App implements OnInit {
 
   // Handlers for Child Component Events
 
-  // Called when expense is added in ExpenseFormComponent
+  // Called when expense is added or updated
   async onExpenseAdded() {
+    this.editingExpense = null; // Clear edit mode if it was enabling
     await this.fetchExpenses();
+  }
+
+  // Called when user clicks cancel in form
+  onCancelEdit() {
+    this.editingExpense = null;
+  }
+
+  // Called when user clicks edit in list
+  onEditExpense(expense: any) {
+    this.editingExpense = expense;
   }
 
   // Called when delete is confirmed in ExpenseListComponent

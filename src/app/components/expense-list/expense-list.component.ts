@@ -4,10 +4,10 @@ import { FormsModule } from '@angular/forms';
 import Swal from 'sweetalert2';
 
 @Component({
-    selector: 'app-expense-list',
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    template: `
+  selector: 'app-expense-list',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `
     <!-- Filters & Search -->
     <div class="card p-3 shadow-sm border-0 mb-4 bg-light">
       <div class="row g-2 align-items-center">
@@ -84,6 +84,9 @@ import Swal from 'sweetalert2';
               <td class="fw-bold text-dark">₹{{ exp.amount | number }}</td>
               <td class="text-muted small">{{ exp.created_at | date:'dd MMM yyyy' }}</td>
               <td class="text-end pe-4">
+                <button class="btn btn-outline-primary btn-sm border-0 me-2" (click)="onEdit(exp)" title="Edit">
+                  <i class="bi bi-pencil-square"></i>
+                </button>
                 <button class="btn btn-outline-danger btn-sm border-0" (click)="confirmDelete(exp.id)" title="Delete">
                   <i class="bi bi-trash-fill"></i>
                 </button>
@@ -105,53 +108,59 @@ import Swal from 'sweetalert2';
   `
 })
 export class ExpenseListComponent {
-    @Input() expenses: any[] = [];
-    @Output() removeExpense = new EventEmitter<number>();
+  @Input() expenses: any[] = [];
+  @Output() removeExpense = new EventEmitter<number>();
+  @Output() editExpense = new EventEmitter<any>();
 
-    // Filters
-    searchQuery: string = '';
-    filterCategory: string = 'All';
-    startDate: string = '';
-    endDate: string = '';
+  // Filters
+  searchQuery: string = '';
+  filterCategory: string = 'All';
+  startDate: string = '';
+  endDate: string = '';
 
-    get filteredExpenses() {
-        return this.expenses.filter(exp => {
-            const matchesSearch = exp.title.toLowerCase().includes(this.searchQuery.toLowerCase());
-            const matchesCategory = this.filterCategory === 'All' || exp.category === this.filterCategory;
+  get filteredExpenses() {
+    return this.expenses.filter(exp => {
+      const matchesSearch = exp.title.toLowerCase().includes(this.searchQuery.toLowerCase());
+      const matchesCategory = this.filterCategory === 'All' || exp.category === this.filterCategory;
 
-            let matchesDate = true;
-            if (this.startDate && this.endDate) {
-                const expDate = new Date(exp.created_at).getTime();
-                const start = new Date(this.startDate).getTime();
-                const end = new Date(this.endDate).getTime();
-                const endInclusive = end + 86400000;
-                matchesDate = expDate >= start && expDate < endInclusive;
-            }
+      let matchesDate = true;
+      if (this.startDate && this.endDate) {
+        const expDate = new Date(exp.created_at).getTime();
+        const start = new Date(this.startDate).getTime();
+        const end = new Date(this.endDate).getTime();
+        const endInclusive = end + 86400000;
+        matchesDate = expDate >= start && expDate < endInclusive;
+      }
 
-            return matchesSearch && matchesCategory && matchesDate;
-        });
-    }
+      return matchesSearch && matchesCategory && matchesDate;
+    });
+  }
 
-    clearFilters() {
-        this.searchQuery = '';
-        this.filterCategory = 'All';
-        this.startDate = '';
-        this.endDate = '';
-    }
+  clearFilters() {
+    this.searchQuery = '';
+    this.filterCategory = 'All';
+    this.startDate = '';
+    this.endDate = '';
+  }
 
-    confirmDelete(id: number) {
-        Swal.fire({
-            title: 'Are you sure?',
-            text: "You won't be able to revert this!",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Yes, delete it!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                this.removeExpense.emit(id);
-            }
-        });
-    }
+  onEdit(expense: any) {
+    this.editExpense.emit(expense);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  confirmDelete(id: number) {
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.removeExpense.emit(id);
+      }
+    });
+  }
 }
